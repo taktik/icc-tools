@@ -15,5 +15,6 @@ export function addNode(to: string, db: string, node: string, username: string, 
       dbNodes.data.by_range[s].push(node)
     })
     console.log(JSON.stringify(dbNodes.data))
+    axios.put(`${to}/_dbs/${db}`, dbNodes.data, {headers: {'Authorization': basicAuth}})
   })
 }

@@ -3,6 +3,7 @@ import {syncDbs} from './sync-dbs'
 import {resyncDbs} from './resync-dbs'
 import {auditDbs} from './audit-dbs'
 import {addNode} from './add-node'
+import {restoreDb} from './restore-db'
 import {initBase} from './init-base'
 import {initViews} from "./init-views";
 
@@ -49,8 +50,9 @@ program
   .option('-g, --grep [value]', "Regex", "icure-")
   .option('-e, --endpoint [value]', "Endpoint (replicate/replicator)", "replicate")
   .option('-c, --continuous', "Continuous replication", false)
+  .option('-s, --replicateSynced', "Replicate already synced dbs", false)
   .action(function (from, to, args) {
-    resyncDbs(from, to, args.username, args.password, args.grep, `_${args.endpoint}`, args.continuous)
+    resyncDbs(from, to, args.username, args.password, args.grep, `_${args.endpoint}`, args.continuous, args.replicateSynced)
   })
 
 program
@@ -71,6 +73,17 @@ program
   .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
   .action(function (srv, db, node, args) {
     addNode(srv, db, node, args.username, args.password)
+  })
+
+program
+  .command('restore-db <server> <db>') // sub-command name
+  .alias('rd') // alternative sub-command is `an`
+  .description('Restore db. Do not use unless you know what you are doing') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-s, --sequence [value]', "First sequence number", "0")
+  .action(function (srv, db, args) {
+    restoreDb(srv, db, args.username, args.password, Number(args.sequence))
   })
 
 // allow commander to parse `process.argv`

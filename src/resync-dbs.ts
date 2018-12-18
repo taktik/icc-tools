@@ -4,7 +4,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export function resyncDbs(fromUrl:string, toUrl:string, username: string, password: string, grep: string, endpoint:string, continuous: boolean) {
+export function resyncDbs(fromUrl:string, toUrl:string, username: string, password: string, grep: string, endpoint:string, continuous: boolean, replicateSynced: boolean) {
   const colors = require('colors/safe')
   const ProgressBar = require('progress');
   const axios = require('axios')
@@ -61,7 +61,7 @@ export function resyncDbs(fromUrl:string, toUrl:string, username: string, passwo
 
     prom = prom.then( () => {
       Object.keys(from).forEach(k => {
-        if (k.match(grep) && to[k] && to[k].doc_count !== from[k].doc_count) {
+        if (k.match(grep) && to[k] && (to[k].doc_count !== from[k].doc_count || replicateSynced)) {
           console.log('Syncing %s : %s -> %s', colors.bold(k), colors.green(from[k].doc_count.toString()), colors.red(to[k].doc_count.toString()))
 
           const g = grps.data.rows.find(g => k.includes(g.doc._id))

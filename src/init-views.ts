@@ -8,6 +8,9 @@ const views = ['-base/_design/User/_view/all','-base/_design/Code/_view/all','-b
   '-patient/_design/Patient/_view/all','-patient/_design/AccessLog/_view/all',
   '-healthdata/_design/Contact/_view/all','-healthdata/_design/Document/_view/all','-healthdata/_design/HealthElement/_view/all','-healthdata/_design/Form/_view/all','-healthdata/_design/Invoice/_view/all','-healthdata/_design/Message/_view/all']
 
+
+//const views = ['-patient/_design/Patient/_view/all']
+
 export function initViews(serverUrl:string, username: string, password: string, grep: string = null) {
   const axios = require('axios')
   const btoa = require('btoa')
@@ -29,7 +32,7 @@ export function initViews(serverUrl:string, username: string, password: string, 
           .catch(e => {
             console.log(`${serverUrl}/icure-%s%s : %s`, g._id,v,e.message)
             if (e.response && e.response.status === 500) {
-              return sleep(10 * 1000)
+              return sleep(180 * 1000)
             }
           })
         )))
