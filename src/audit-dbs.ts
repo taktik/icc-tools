@@ -7,7 +7,7 @@ export function auditDbs(server:string, username: string, password: string, log:
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
 
   return Promise.all([
-    axios.get(`${server}/_all_dbs`, {headers: {'Authorization': +basicAuth}}),
+    axios.get(`${server}/_all_dbs`, {headers: {'Authorization': basicAuth}}),
   ]).then(([dbs]) => {
     let prom = Promise.resolve([[],[]])
 

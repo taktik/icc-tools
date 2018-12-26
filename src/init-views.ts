@@ -32,7 +32,7 @@ export function initViews(serverUrl:string, username: string, password: string, 
           .catch(e => {
             console.log(`${serverUrl}/icure-%s%s : %s`, g._id,v,e.message)
             if (e.response && e.response.status === 500) {
-              return sleep(180 * 1000)
+              return sleep(600 * 1000)
             }
           })
         )))
