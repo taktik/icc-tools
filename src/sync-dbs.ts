@@ -1,6 +1,6 @@
 import {flatMap,pick,omit,values} from "lodash"
 
-export function syncDbs(fromUrl:string, toUrl:string, username: string, password: string) {
+export function syncDbs(fromUrl:string, toUrl:string, username: string, password: string, grep: string) {
   const axios = require('axios')
   const btoa = require('btoa')
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
@@ -11,11 +11,11 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
     axios.get(`${fromUrl}/_all_dbs`, { headers: { 'Authorization': basicAuth }}),
     axios.get(`${toUrl}/_all_dbs`, { headers: { 'Authorization': basicAuth }})
   ]).then( ([fromRes, toRes, fromDbs, toDbs]) => {
-    const from = fromRes.data.rows.reduce((m, g) => {
+    const from = fromRes.data.rows.filter(g => !grep || g.id.match(grep)).reduce((m, g) => {
       m[g.id] = g.doc;
       return m
     }, {})
-    const to = toRes.data.rows.reduce((m, g) => {
+    const to = toRes.data.rows.filter(g => !grep || g.id.match(grep)).reduce((m, g) => {
       m[g.id] = g.doc;
       return m
     }, {})
@@ -37,7 +37,7 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
       .forEach(g =>
         (prom = prom
             .then(grps => {
-              console.log("Creating group %s on destination", g)
+              console.log("Creating group %s on destination", g._id)
               return axios.post(`${toUrl}/icure-__-config`, omit(g, ['_rev']), {headers: {'Authorization': basicAuth}})
                   .then(res => grps.concat([res.data]));
               }
@@ -63,7 +63,7 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
           })
       })
 
-    fromDbs.data.forEach(db => {
+    fromDbs.data.filter(g => !grep || g.id.match(grep)).forEach(db => {
       if (!toDbs.data.some(x => x === db)) {
         console.log("%s missing on destination", db)
       }

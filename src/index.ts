@@ -9,6 +9,9 @@ import {initBase} from './init-base'
 import {initViews} from "./init-views";
 import {addStandaloneDbs} from "./add-standalone-db";
 import {getFormTemplate, setFormTemplate} from "./get-form-template";
+import {setMembers} from "./set-member";
+import {addGroup} from "./add-group";
+import {invite} from "./invite";
 
 const program = require('commander');
 
@@ -18,8 +21,9 @@ program
   .description('Sync dbs') // command description
   .option('-u, --username [value]', 'Username', "icure")
   .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-g, --grep [value]', "Regex", ".+")
   .action(function (from, to, args) {
-    syncDbs(from, to, args.username, args.password)
+    syncDbs(from, to, args.username, args.password, args.grep)
   })
 
 program
@@ -54,8 +58,9 @@ program
   .option('-e, --endpoint [value]', "Endpoint (replicate/replicator)", "replicate")
   .option('-c, --continuous', "Continuous replication", false)
   .option('-s, --replicateSynced', "Replicate already synced dbs", false)
+  .option('-x, --prefix [value]', "Prefix for replication document id", false)
   .action(function (from, to, args) {
-    resyncDbs(from, to, args.username, args.password, args.grep, `_${args.endpoint}`, args.continuous, args.replicateSynced)
+    resyncDbs(from, to, args.username, args.password, args.grep, `_${args.endpoint}`, args.continuous, args.replicateSynced, null, args.prefix)
   })
 
 program
@@ -83,6 +88,17 @@ program
   })
 
 program
+  .command('set-members <server>') // sub-command name
+  .alias('sm') // alternative sub-command is `asv`
+  .description('set members') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-g, --grep [value]', "Regex", "icure-")
+  .action(function (srv, args) {
+    setMembers(srv, args.username, args.password, args.grep)
+  })
+
+program
   .command('add-node <server> <db> <node>') // sub-command name
   .alias('an') // alternative sub-command is `an`
   .description('Add node to db. Do not use unless you know what you are doing') // command description
@@ -90,6 +106,16 @@ program
   .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
   .action(function (srv, db, node, args) {
     addNode(srv, db, node, args.username, args.password)
+  })
+
+program
+  .command('add-group <server> <prefix> <name>') // sub-command name
+  .alias('ag') // alternative sub-command is `ag`
+  .description('Add group to db') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .action(function (srv, px, name, args) {
+    addGroup(srv, px, name, args.username, args.password)
   })
 
 program
@@ -134,6 +160,17 @@ program
   .option('-s, --sequence [value]', "First sequence number", "0")
   .action(function (srv, db, args) {
     restoreDb(srv, db, args.username, args.password, Number(args.sequence))
+  })
+
+program
+  .command('invite <server>') // sub-command name
+  .alias('iv') // alternative sub-command is `an`
+  .description('Invite list of users from JSON') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-f, --file [value]', "File", null)
+  .action(function (srv, args) {
+    invite(srv, args.username, args.password, args.file)
   })
 
 // allow commander to parse `process.argv`
