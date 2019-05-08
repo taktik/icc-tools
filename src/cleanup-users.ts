@@ -1,41 +1,41 @@
-import {flatMap,pick,omit,values} from "lodash"
+import {groupBy,values} from "lodash"
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-const views = ['-base/_design/User/_view/all','-base/_design/Code/_view/all','-base/_design/Tarification/_view/all','-base/_design/Insurance/_view/all','-base/_design/HealthcareParty/_view/all',
-  '-patient/_design/Patient/_view/all','-patient/_design/AccessLog/_view/all',
-  '-healthdata/_design/Contact/_view/all','-healthdata/_design/Document/_view/all','-healthdata/_design/HealthElement/_view/all','-healthdata/_design/Form/_view/all','-healthdata/_design/Invoice/_view/all','-healthdata/_design/Message/_view/all']
-
-
-//const views = ['-patient/_design/Patient/_view/all']
-
-export function initViews(serverUrl:string, username: string, password: string, grep: string = null) {
+export function cleanupUsers(serverUrl:string, username: string, password: string, grep: string = null) {
   const axios = require('axios')
   const btoa = require('btoa')
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
 
-  Promise.all([
-    axios.get(`${serverUrl}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }}),
-  ]).then( ([fromRes]) => {
-    const from = fromRes.data.rows.reduce((m, g) => {
-      (!grep || g.id.match(grep)) && (m[g.id] = g.doc);
-      return m
-    }, {})
+
+  axios.get(`${serverUrl}/icure-__-base/_design/User/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }})
+  .then( fromRes => {
+    const from = fromRes.data.rows.filter(u => (!grep || (u.doc.groupId && u.doc.groupId.match(grep))), {})
+    const [valid, invalid] = from.reduce(([v,i],u) => { u.doc.groupId && u.doc._id.startsWith(`${u.doc.groupId}:`) && !(u.doc._id.match(/.+:.+:.+/)) ? v.push(u.doc) : i.push(u.doc); return [v,i]}, [[],[]])
+    invalid.forEach(u => {
+      console.log(`Delete ${u._id}`)
+    })
+
+    axios.post(`${serverUrl}/icure-__-base/_bulk_docs`, {
+      "docs": invalid.map(d => ({_id:d._id, _rev:d._rev, _deleted:true}))
+    }, { headers: { 'Authorization': basicAuth }})
 
     let prom = Promise.resolve([])
-    values(from)
-      .forEach(g => views.forEach( v => prom = prom
-        .then(() => axios.get(`${serverUrl}/icure-${g._id}${v}`, {params: {limit:'1'}, headers: {'Authorization': basicAuth}})
-          .then(() => console.log(`${serverUrl}/icure-%s%s indexed`, g._id,v))
-          .catch(e => {
-            console.log(`${serverUrl}/icure-%s%s : %s`, g._id,v,e.message)
-            if (e.response && e.response.status === 500) {
-              return sleep(600 * 1000)
-            }
-          })
-        )))
+    values(groupBy(valid, 'groupId'))
+      .forEach(users => {
+        prom = prom
+          .then(toDelete => axios.post(`${serverUrl}/icure-${users[0].groupId}-base/_all_docs`, {keys:users.map(u => u._id.replace(`${u.groupId}:`,''))}, {headers: {'Authorization': basicAuth}})
+            .then(objs => toDelete.concat(objs.data.rows.map((k,idx) => Object.assign(k,{'doc': users[idx]})).filter(r => r.error === 'not_found').map(r => r.doc)))
+            .catch(e => {
+              console.log(`${serverUrl}/icure-%s%s`, users[0].groupId, e.message)
+              return toDelete
+            })
+          )
+      })
+    prom.then(tbd => {
+      tbd.forEach(d => console.log(`Delete ${d._id} - ${d.login}`))
+      return axios.post(`${serverUrl}/icure-__-base/_bulk_docs`, {
+        "docs": tbd.map(d => ({_id:d._id, _rev:d._rev, _deleted:true}))
+      }, { headers: { 'Authorization': basicAuth }})
 
+    })
   }).catch(e => console.log(e))
 }

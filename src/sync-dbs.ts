@@ -20,6 +20,7 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
       return m
     }, {})
     console.log("%s groups on src and %s groups on destination", fromRes.data.rows.length, toRes.data.rows.length)
+
     let prom = Promise.resolve([])
 
     values(from)
@@ -29,7 +30,6 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
           .catch(e => {if (e.response && e.response.status === 409) { console.log(`${g._id} already created`)} else {console.log(e)}; return users})
         ))
 
-    const createdUsersProm = prom
 
     prom = prom.then(() =>[])
     values(from)
@@ -43,7 +43,6 @@ export function syncDbs(fromUrl:string, toUrl:string, username: string, password
               }
             )
         ))
-    const createdGroupsProm = prom
 
     prom = prom.then(()=>null)
 

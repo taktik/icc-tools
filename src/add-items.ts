@@ -1,35 +1,38 @@
-import {assign} from "lodash"
+import {omit} from "lodash"
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-export function getHcps(url:string, username: string, password: string, grep: string) {
+export function addItems(url: string, srcdb: string, username: string, password: string, grep: string, ids: Array<string>) {
   const axios = require('axios')
   const btoa = require('btoa')
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
 
-  console.log('Grep is '+grep)
+  console.log('Grep is ' + grep)
 
-  axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }}).then( ({data:{rows:grps}}) => {
-    let prom:Promise<Array<any>> = Promise.resolve([])
-    grps.filter(g => (!grep || g.id.match(grep))).forEach(g => {
-      prom = prom.then(acc =>
-        axios.get(`${url}/icure-${g.id}-base/_design/User/_view/all?include_docs=true`, {headers: {'Authorization': basicAuth}})
-          .then(({data: {rows: users}}) =>
-            axios.post(`${url}/icure-${g.id}-base/_all_docs?include_docs=true`, {keys: users.map(u => u.doc.healthcarePartyId)}, {headers: {'Authorization': basicAuth}})
-          )
-          .then(({data: {rows: hcps}}) =>
-              acc.concat(hcps.map(h => assign(h.doc, {groupId: g.id})))
-          ).catch(e => acc.concat([{nihii:'<N/A>', error:e, groupId: g.id}]))
-      )
+  axios.post(`${url}/${srcdb}/_all_docs?include_docs=true`, {keys: ids}, {headers: {'Authorization': basicAuth}})
+    .then(({data: {rows: rows}}) => rows.map(r => r.doc))
+    .then( items => {
+      axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, {headers: {'Authorization': basicAuth}})
+        .then(({data: {rows: grps}}) => {
+          let prom: Promise<Array<any>> = Promise.resolve([])
+          grps
+            .filter(g => (!grep || g.id.match(grep)))
+            .forEach(g => {
+              prom = prom.then(() => {
+                  return axios.post(`${url}/icure-${g.id}-base/_all_docs`, {keys: ids}, {headers: {'Authorization': basicAuth}})
+                    .then(({data: {rows: rows}}) => {
+                      const okIds = rows.filter(d => !d.error).map(d => d.key)
+                      const docs = items.filter(i => !okIds.includes(i._id)).map(o => omit(o, ['_rev']))
+                      if (docs && docs.length) {
+                        console.log(`add ${docs.length} items for group: ${g.id}`)
+                        return axios.post(`${url}/icure-${g.id}-base/_bulk_docs`, {docs}, {headers: {'Authorization': basicAuth}})
+                      } else {
+                        return null
+                      }
+                    })
+                    .catch(e => console.log(`error for group: ${g.id}`, e));
+                }
+              )
+            })
+        })
+
     })
-    prom.then(hcps => {
-      const byNihii = {}
-      hcps.forEach(h => { if (h.nihii) { byNihii[h.nihii] = (byNihii[h.nihii] || []).concat([h]) }})
-      Object.keys(byNihii).forEach(k => {
-        console.log(`${byNihii[k][0].lastName}\t${byNihii[k][0].firstName}\t${k}\t${byNihii[k].map(h => h.groupId).join(',')}`)
-      })
-    })
-  })
 }

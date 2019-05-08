@@ -12,8 +12,24 @@ import {getFormTemplate, setFormTemplate} from "./get-form-template";
 import {setMembers} from "./set-member";
 import {addGroup} from "./add-group";
 import {invite} from "./invite";
+import {initShards} from "./init-shards";
+import {test} from "./test";
+import {getHcps} from "./get-hcps";
+import {cleanupUsers} from "./cleanup-users";
+import {addItems} from "./add-items";
 
 const program = require('commander');
+
+program
+  .command('get-hcps <url>') // sub-command name
+  .alias('ghcps') // alternative sub-command is `al`
+  .description('Get hcps') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-g, --grep [value]', "Regex", ".+")
+  .action(function (url, args) {
+    getHcps(url, args.username, args.password, args.grep)
+  })
 
 program
   .command('sync-dbs <from> <to>') // sub-command name
@@ -27,6 +43,17 @@ program
   })
 
 program
+  .command('clean-users  <srv>') // sub-command name
+  .alias('cu') // alternative sub-command is `al`
+  .description('cleanup Users') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-g, --grep [value]', "Regex", null)
+  .action(function (srv, args) {
+    cleanupUsers(srv, args.username, args.password, args.grep)
+  })
+
+program
   .command('init-base <srv>') // sub-command name
   .alias('ib') // alternative sub-command is `al`
   .description('Init base dbs') // command description
@@ -35,6 +62,17 @@ program
   .option('-g, --grep [value]', "Regex", ".+")
   .action(function (srv, args) {
     initBase(srv, args.username, args.password, args.grep)
+  })
+
+program
+  .command('init-shards <srv>') // sub-command name
+  .alias('is') // alternative sub-command is `al`
+  .description('Init base dbs') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-g, --grep [value]', "Regex", ".+")
+  .action(function (srv, args) {
+    initShards(srv, args.username, args.password, args.grep)
   })
 
 program
@@ -76,6 +114,17 @@ program
     addStandaloneDbs(from, to, args.username, args.password, args.toUsername, args.toPassword, args.grep)
   })
 
+program
+  .command('add-items <srv> <srcdb>') // sub-command name
+  .alias('ai') // alternative sub-command is `asdbs`
+  .description('This is advanced wizardry you should use when you want to mount a shard on a standalone db. from is the 5986 server you read  the dbbs from. to is  the 5986 standalone server') // command description
+  .option('-u, --username [value]', 'Username', "icure")
+  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+  .option('-i, --ids [value]', "ids list", "")
+  .option('-g, --grep [value]', "Regex", ".+")
+  .action(function (srv, srcdb, args) {
+    addItems(srv, srcdb, args.username, args.password, args.grep, args.ids.length ? args.ids.split(',') : [])
+  })
 
 program
   .command('audit <server>') // sub-command name
@@ -171,6 +220,13 @@ program
   .option('-f, --file [value]', "File", null)
   .action(function (srv, args) {
     invite(srv, args.username, args.password, args.file)
+  })
+
+program
+  .command('test') // sub-command name
+  .description('Test') // command description
+  .action(function (srv, args) {
+    test()
   })
 
 // allow commander to parse `process.argv`

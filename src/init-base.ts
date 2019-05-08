@@ -1,4 +1,4 @@
-export function initBase(serverUrl:string, username: string, password: string, grep: string = null) {
+export function initBase(serverUrl: string, username: string, password: string, grep: string = null) {
   const axios = require('axios')
   const btoa = require('btoa')
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
@@ -8,25 +8,23 @@ export function initBase(serverUrl:string, username: string, password: string, g
   }
 
   Promise.all([
-    axios.get(`${serverUrl}/_all_dbs`, {headers: {'Authorization': basicAuth}}),
-  ]).then(([dbsRes]) => {
+    axios.get(`${serverUrl}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }}),
+  ]).then( ([fromRes]) => {
 
     let oprom = Promise.resolve(null)
-    let ticks = 0
+    let i = 0;
 
-    let bar: any
-
-    dbsRes.data.filter(db => db.match(/-base$/) && (!grep || db.match(grep)))
+    const dbs = fromRes.data.rows.filter(db => (!grep || db.id.match(grep)));
+    dbs
       .forEach(db => oprom = oprom
         .then(() => axios.post(`${serverUrl}/_replicator`, {
-            source: `http://template:804e5824-8d79-4074-89be-def87278b51f@127.0.0.1:5984/icure-_template_-persphysician-fr`,
-            target: `http://${username}:${password}@127.0.0.1:5984/${db}`
-          }, {headers: {'Authorization': basicAuth}}).then(() => {
-            bar ? bar.tick() : ticks++
-          }).catch(e => {
-            console.log(e)
-          })
-        ))
-
+            source: `${serverUrl.replace(/:\/\//, '://tz-base-empty-72543ad5-53ea-4bf9-a05a-ff269252bf00:6494d37f-7353-4a6f-950a-97dc43b04b5c@')}/icure-tz-base-empty-72543ad5-53ea-4bf9-a05a-ff269252bf00-base`,
+            target: `${serverUrl.replace(/:\/\//, `://${db.id}:${db.doc.password}@`)}/icure-${db.id}-base`
+          }, {headers: {'Authorization': basicAuth}}) || console.log(`${i-10} replications queued`)
+        )
+        .catch(e => {
+          console.log(e)
+        })
+      )
   })
 }

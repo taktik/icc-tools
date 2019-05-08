@@ -1,4 +1,4 @@
-import {values} from "lodash"
+import {values, uniq} from "lodash"
 
 export function addNode(to: string, db: string, node: string, username: string, password: string) {
   const axios = require('axios')
@@ -7,17 +7,22 @@ export function addNode(to: string, db: string, node: string, username: string, 
 
   return axios.get(`${to}/_dbs/${db}`, {headers: {'Authorization': basicAuth}})
     .then((dbNodes) => {
-    if (!dbNodes.data.by_node[node]) {
-      const shards = values(dbNodes.data.by_node)[0]
-      dbNodes.data.by_node[node] = shards.map((x: any) => x)
+      let mustSave = false
+      const shards = Object.keys(dbNodes.data.by_range)
+      const currentShards = dbNodes.data.by_node[node] || []
+
       shards.forEach(s => {
-        dbNodes.data.changelog.push(["add", s, node])
-        dbNodes.data.by_range[s].push(node)
+        if (!currentShards.includes(s)) {
+          dbNodes.data.changelog.push(["add", s, node])
+          dbNodes.data.by_range[s].push(node)
+          mustSave = true
+        }
       })
-      console.log(JSON.stringify(dbNodes.data))
-      return axios.put(`${to}/_dbs/${db}`, dbNodes.data, {headers: {'Authorization': basicAuth}})
-    } else {
-      return null
-    }
-  })
+
+      if (mustSave) {
+        dbNodes.data.by_node[node] = shards.map((x: any) => x)
+        console.log(JSON.stringify(dbNodes.data, undefined, ' '))
+        return axios.put(`${to}/_dbs/${db}`, dbNodes.data, {headers: {'Authorization': basicAuth}})
+      }
+  }).catch(e => console.log(e))
 }
