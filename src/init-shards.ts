@@ -28,19 +28,38 @@ export function initShards(serverUrl: string, username: string, password: string
   }
   */
 
-  const keys = {
-    "0": "4d2705b0-637f-4206-abbd-b639b4557b60", //"1": "f6b0064d-cf8a-428e-9f9b-b84465a70cc8",
-    "2": "fa289f3e-7e7f-4aa2-a4fb-9a4144e3eb5f", //"3": "9079b848-cd18-4e22-ab23-ad26571935ec",
-    "4": "3334942b-829c-4c25-8618-448577586b47", //"5": "b0bdb885-9cc4-4c3f-93b3-a1c37a9d53ad",
-    "6": "f3048b99-b277-4ff1-97a1-5df5f02cd02d", //"7": "728f4a57-62da-464b-8ac1-3f2600c43c89",
-    "8": "9792a714-38d6-4610-9a2b-c70ea4076c95", //"9": "0978bdb2-de80-413f-b1dc-7f43eab19329",
-    "d": "c1b057ab-2f5e-47cf-a67b-999f2df41586", //"b": "39621ed3-0418-44ea-9a01-45fd82d56977",
-    "e": "d9e92c42-681a-44bf-8a2f-2a3b2f926d38", //"c": "93ec0d13-ab95-422f-874f-d4bb924eb1a0",
-    "a": "913b250c-1c9f-4625-9b71-801a34153c6d", //"f": "63bf2012-919c-445e-9751-854bd6cc5249"
-  }
+  /*const keys = {
+    "1": "f6b0064d-cf8a-428e-9f9b-b84465a70cc8", //"0": "4d2705b0-637f-4206-abbd-b639b4557b60",
+    "3": "9079b848-cd18-4e22-ab23-ad26571935ec", //"2": "fa289f3e-7e7f-4aa2-a4fb-9a4144e3eb5f",
+    "5": "b0bdb885-9cc4-4c3f-93b3-a1c37a9d53ad", //"4": "3334942b-829c-4c25-8618-448577586b47",
+    "7": "728f4a57-62da-464b-8ac1-3f2600c43c89", //"6": "f3048b99-b277-4ff1-97a1-5df5f02cd02d",
+    "9": "0978bdb2-de80-413f-b1dc-7f43eab19329", //"8": "9792a714-38d6-4610-9a2b-c70ea4076c95",
+    "b": "39621ed3-0418-44ea-9a01-45fd82d56977", //"d": "c1b057ab-2f5e-47cf-a67b-999f2df41586",
+    "c": "93ec0d13-ab95-422f-874f-d4bb924eb1a0", //"e": "d9e92c42-681a-44bf-8a2f-2a3b2f926d38",
+    "f": "63bf2012-919c-445e-9751-854bd6cc5249", //"a": "913b250c-1c9f-4625-9b71-801a34153c6d"
+  }*/
 
+  const keys = {
+    //"0": "5c21e0e8-3a45-4a12-899a-90336796d6b4",
+    "1": "fe3c768c-902f-4aa3-8b69-c0b88c8b74fd",
+    //"2": "8be2692c-4838-4a41-ac4c-acc8ed25b151",
+    "3": "35e8f58f-e90f-496c-aab6-8f667c8aa21f",
+    //"4": "83fe60a9-625c-445d-9609-deca2f42033a",
+    "5": "4653c859-d964-496b-aa6f-92dea9d4a750",
+    //"6": "6bd01dc8-4534-415c-a80e-1e93c71e02ad",
+    "7": "acbf470b-e203-4c46-9ce6-e86049aea167",
+    //"8": "e0778da4-40ab-4558-8048-75701144c24d",
+    "9": "e82ee934-4652-4ce1-a665-9be002d874c4",
+    //"d": "267f72cf-d067-4977-b0b1-986479b4bbd2",
+    "c": "77f1b8bf-c7bc-4b56-b3f5-b4f31155e492",
+    //"e": "d8c357a6-8a18-45bb-a93b-f1c06d4deee2",
+    "f": "d5dd0da6-caaa-4f36-8adf-85877d88d639",
+    //"b": "5ce11dee-dbfd-49d0-a500-4f97bfe868d7",
+    "a": "41ecff7a-21b0-43e2-b610-8310f637176f",
+  }
+  /*
   //Above built with
-  /*const keys = {}
+  const keys = {}
   while(Object.keys(keys).length<16) {
     const id = uuidv4()
     const val = crc32.str(id)
@@ -48,7 +67,7 @@ export function initShards(serverUrl: string, username: string, password: string
 
     keys[hex.length<8 ? '0' : hex.substr(0,1)] = id
   }
-  */
+*/
 
   Promise.all([
     axios.get(`${serverUrl}/_all_dbs`, {headers: {'Authorization': basicAuth}}),
@@ -58,7 +77,7 @@ export function initShards(serverUrl: string, username: string, password: string
     const filteredDbs = dbsRes.data.filter(db => (!grep || db.match(grep)))
 
     filteredDbs.forEach(db => prom = prom
-      .then(() => axios.get(`${serverUrl}/${db}/${keys["a"]}`, {headers: {'Authorization': basicAuth}}))
+      .then(() => axios.get(`${serverUrl}/${db}/${keys["f"]}`, {headers: {'Authorization': basicAuth}}))
       .catch(() => null)
       .then((res) => {
           if (res) {

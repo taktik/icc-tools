@@ -1,4 +1,4 @@
-import {flatMap,pick,chunk,values} from "lodash"
+import {chunk,values} from "lodash"
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -105,14 +105,12 @@ export function resyncDbs(fromUrl:string, toUrl:string, username: string, passwo
     }
 
     const toSync = Object.keys(from).filter(k => k.match(grep) && to[k] && (replicateSynced || to[k].doc_count !== from[k].doc_count))
-    chunk(toSync, 10).forEach(syncs => {
+    chunk(toSync, 32).forEach(syncs => {
       prom = prom.then( () => {
+        console.log('Syncing %s -> %s', colors.bold(syncs[0]), colors.bold(syncs[syncs.length - 1]))
         return Promise.all(syncs.map(k => {
-          console.log('Syncing %s : %s -> %s', colors.bold(k), colors.green((from[k].doc_count || '-').toString()), colors.red((to[k].doc_count||'-').toString()))
-
           const g = grps.find(g => k.includes(g.id))
           if (g) {
-            console.log('%s : %s', colors.bold(k), colors.green('starting'))
             const kAuth = 'Basic ' + btoa(g.doc._id + ':' + g.doc.password);
 
             return axios.get(`${toUrl}/${k}`,{headers: {'Authorization': kAuth}})
@@ -136,7 +134,6 @@ export function resyncDbs(fromUrl:string, toUrl:string, username: string, passwo
                 return axios.post(`${toUrl}/${endpoint}`,
                 repDoc, {headers: {'Authorization': basicAuth}, timeout: 180000})
               })
-              .then(() => console.log('%s : %s', colors.bold(k), colors.green('done')))
               .catch((e) => {
                 if (e.response && e.response.status === 504) {
                   console.log('%s : %s', colors.bold(k), colors.yellow('timeout'))
@@ -154,10 +151,10 @@ export function resyncDbs(fromUrl:string, toUrl:string, username: string, passwo
               })
               .then(() =>
                 axios.get(`${toUrl}/_active_tasks`, {headers: {'Authorization': basicAuth}}).then(res => {
-                  return res.data.filter(f => f.type === 'replication').length > 20 ? sleep(600 * 1000) :  sleep(5 * 1000)
+                  return res.data.filter(f => f.type === 'replication').length > 20 ? sleep(600 * 1000) :  sleep(100)
                 }).catch(e => sleep(600 * 1000))
               )
-          }}))
+          }})).then(() => console.log('Syncing %s -> %s: %s', colors.bold(syncs[0]), colors.bold(syncs[syncs.length - 1]), colors.green('done')))
       })
     })
   }).catch(e => console.log(e))
