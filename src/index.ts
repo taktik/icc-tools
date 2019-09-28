@@ -17,8 +17,20 @@ import {test} from "./test";
 import {getHcps} from "./get-hcps";
 import {cleanupUsers} from "./cleanup-users";
 import {addItems} from "./add-items";
+import {getOccurences} from "./get-occurences";
 
 const program = require('commander');
+
+program
+    .command('get-occurences <url>') // sub-command name
+    .alias('occs') // alternative sub-command is `al`
+    .description('Get occurences') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", ".+")
+    .action(function (url, args) {
+        getOccurences(url, args.username, args.password, args.grep)
+    })
 
 program
   .command('get-hcps <url>') // sub-command name

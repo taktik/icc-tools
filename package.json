@@ -5,7 +5,7 @@
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "npm run build && node $NODE_DEBUG_OPTION dist/index.js",
+    "dev": "npm run build && node dist/index.js",
     "test": "tsc && mocha dist/**/*.spec.js"
   },
   "author": "",
@@ -25,7 +25,10 @@
     "progress": "^2.0.3",
     "request": "^2.88.0",
     "tsc": "^1.5.3",
-    "typescript": "3.2.2"
+    "typescript": "3.2.2",
+    "icc-api": "latest",
+    "node-fetch": "latest",
+    "node-webcrypto-ossl": "latest"
   },
   "devDependencies": {
     "nodemon": "^1.18.7"
