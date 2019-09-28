@@ -1,5 +1,5 @@
 import fetch from 'node-fetch'
-import {assign, uniq, difference, chunk} from "lodash"
+import {uniq, difference, chunk} from "lodash"
 import {ContactDto, GroupDto, ListOfIdsDto} from "icc-api";
 import { Api } from './api'
 const fs = require('fs');
@@ -16,7 +16,7 @@ export async function restoreSfks(url:string, username: string, password: string
   console.log('Grep is '+grep)
 
   const grps = (await axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }})).data.rows
-  grps.filter(g => (!grep || g.id.match(grep))).reduce(async (p,g:GroupDto) => {
+  grps.filter(g => (!grep || g.id.match(grep))).reduce(async (p:Promise<any>,g:GroupDto) => {
     await p
     const api = new Api(url, { Authorization: `Basic ${Buffer.from(`${g.id}:${g.password}`).toString('base64')}` }, fetch as any)
 
@@ -66,5 +66,5 @@ export async function restoreSfks(url:string, username: string, password: string
         }, Promise.resolve())
       }, Promise.resolve())
     } ,Promise.resolve())
-  })
+  } ,Promise.resolve())
 }
