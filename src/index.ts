@@ -18,6 +18,7 @@ import {getHcps} from "./get-hcps";
 import {cleanupUsers} from "./cleanup-users";
 import {addItems} from "./add-items";
 import {getOccurences} from "./get-occurences";
+import {restoreSfks} from "./restore-sfks";
 
 const program = require('commander');
 
@@ -30,6 +31,18 @@ program
     .option('-g, --grep [value]', "Regex", ".+")
     .action(function (url, args) {
         getOccurences(url, args.username, args.password, args.grep)
+    })
+
+program
+    .command('restore-sfks <url> <asurl>') // sub-command name
+    .alias('rsfks') // alternative sub-command is `al`
+    .description('Restore SFKs from CFKs') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", ".+")
+    .option('-d, --dir [value]', "Dir with private keys", ".+")
+    .action(function (url, asurl, args) {
+        restoreSfks(url, asurl, args.username, args.password, args.grep, args.dir)
     })
 
 program

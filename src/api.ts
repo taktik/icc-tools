@@ -6,7 +6,7 @@ import {
 	IccHelementXApi,
 	iccPatientApi,
 	IccUserXApi,
-	IccInvoiceXApi, IccDocumentXApi, IccClassificationXApi, iccEntityrefApi
+	IccInvoiceXApi, IccDocumentXApi, IccClassificationXApi, iccEntityrefApi, IccFormXApi
 } from 'icc-api'
 import fetch from 'node-fetch'
 import * as WebCrypto from 'node-webcrypto-ossl'
@@ -17,6 +17,7 @@ export class Api {
 	private _hcpartyicc: IccHcpartyXApi
 	private _cryptoicc: IccCryptoXApi
 	private _contacticc: IccContactXApi
+	private _formicc: IccFormXApi
 	private _helementicc: IccHelementXApi
 	private _invoiceicc: IccInvoiceXApi
 	private _documenticc: IccDocumentXApi
@@ -32,6 +33,7 @@ export class Api {
 		this._hcpartyicc = new IccHcpartyXApi(host, headers, fetchImpl)
 		this._cryptoicc = new IccCryptoXApi(host, headers, this._hcpartyicc, new iccPatientApi(host, headers, fetchImpl), new WebCrypto())
 		this._contacticc = new IccContactXApi(host, headers, this._cryptoicc, fetchImpl)
+		this._formicc = new IccFormXApi(host, headers, this._cryptoicc, fetchImpl)
 		this._invoiceicc = new IccInvoiceXApi(host, headers, this._cryptoicc, this._entityreficc, fetchImpl)
 		this._documenticc = new IccDocumentXApi(host, headers, this._cryptoicc, fetchImpl)
 		this._helementicc = new IccHelementXApi(host, headers, this._cryptoicc, fetchImpl)
@@ -53,6 +55,10 @@ export class Api {
 
 	get contacticc(): IccContactXApi {
 		return this._contacticc
+	}
+
+	get formicc(): IccFormXApi {
+		return this._formicc;
 	}
 
 	get helementicc(): IccHelementXApi {
