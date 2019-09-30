@@ -18,14 +18,14 @@ export async function restoreSfks(url:string, asurl:string, username: string, pa
   const btoa = require('btoa')
   const basicAuth = 'Basic ' + btoa(username + ':' + password);
 
-  async function treatLinkedDocuments(g: GroupDto, usersWithKeys, oksViewName = `Contact/_view/by_hcparty_patientfk`, allViewName = `Contact/_view/all`, fixFn) {
-    const oks = uniq((await axios.get(`${url}/icure-${g.id}-healthdata/_design/${oksViewName}`, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.id))
-    const all = uniq((await axios.get(`${url}/icure-${g.id}-healthdata/_design/${allViewName}`, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.id))
+  async function treatLinkedDocuments(groupId: string, usersWithKeys, oksViewName = `Contact/_view/by_hcparty_patientfk`, allViewName = `Contact/_view/all`, fixFn) {
+    const oks = uniq((await axios.get(`${url}/icure-${groupId}-healthdata/_design/${oksViewName}`, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.id))
+    const all = uniq((await axios.get(`${url}/icure-${groupId}-healthdata/_design/${allViewName}`, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.id))
     const bad = difference(all, oks)
 
     return chunk(bad, 100).reduce(async (pp: Promise<any>, items) => {
       const acc = await pp
-      const docs = (await axios.post(`${url}/icure-${g.id}-healthdata/_all_docs?include_docs=true`, {keys: items}, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.doc)
+      const docs = (await axios.post(`${url}/icure-${groupId}-healthdata/_all_docs?include_docs=true`, {keys: items}, {headers: {'Authorization': basicAuth}})).data.rows.map(r => r.doc)
       const couples: Array<[any, [string, string]]> = await docs.reduce(async (p, doc) => {
         const acc = await p
         let keys
@@ -77,11 +77,12 @@ export async function restoreSfks(url:string, asurl:string, username: string, pa
     return api.contacticc.modifyInvoice(Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)}))
   }
 
-  const grps = (await axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }})).data.rows
-  grps.filter(g => (!grep || g.id.match(grep))).reduce(async (p:Promise<any>,g:GroupDto) => {
+  const grps = grep && grep.startsWith('@') ? [grep.substr(1)] : (await axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }})).data.rows.map(g => g.id)
+
+  grps.filter(gId => (!grep || gId.match(grep))).reduce(async (p:Promise<any>,groupId:string) => {
     const acc = await p
 
-    const users = (await axios.get(`${url}/icure-${g.id}-base/_design/User/_view/all?include_docs=true`, {headers: {'Authorization': basicAuth}})).data.rows.map(u => u.doc);
+    const users = (await axios.get(`${url}/icure-${groupId}-base/_design/User/_view/all?include_docs=true`, {headers: {'Authorization': basicAuth}})).data.rows.map(u => u.doc);
     const usersWithKeys = await users
         .reduce(async (p,u) => {
           const auth = `${u._id}:${values(u.applicationTokens)[0]}`;
@@ -101,10 +102,10 @@ export async function restoreSfks(url:string, asurl:string, username: string, pa
           return res
         }, Promise.resolve([]))
 
-    return acc.concat([{g:g.id, fixes:[]
-        .concat(await treatLinkedDocuments(g, usersWithKeys, `Contact/_view/by_hcparty_patientfk`, `Contact/_view/all`, fixContact))
-        .concat(await treatLinkedDocuments(g, usersWithKeys, `Form/_view/by_hcparty_patientfk`, `Form/_view/all`, fixForm))
-        .concat(await treatLinkedDocuments(g, usersWithKeys, `HealthElement/_view/by_hcparty_patient`, `HealthElement/_view/all`, fixHealthElement))
-        .concat(await treatLinkedDocuments(g, usersWithKeys, `Invoice/_view/by_hcparty_patientfk`, `Invoice/_view/all`, fixInvoice))}])
+    return acc.concat([{g:groupId, fixes:[]
+        .concat(await treatLinkedDocuments(groupId, usersWithKeys, `Contact/_view/by_hcparty_patientfk`, `Contact/_view/all`, fixContact))
+        .concat(await treatLinkedDocuments(groupId, usersWithKeys, `Form/_view/by_hcparty_patientfk`, `Form/_view/all`, fixForm))
+        .concat(await treatLinkedDocuments(groupId, usersWithKeys, `HealthElement/_view/by_hcparty_patient`, `HealthElement/_view/all`, fixHealthElement))
+        .concat(await treatLinkedDocuments(groupId, usersWithKeys, `Invoice/_view/by_hcparty_patientfk`, `Invoice/_view/all`, fixInvoice))}])
   } ,Promise.resolve([]))
 }
