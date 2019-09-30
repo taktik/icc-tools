@@ -59,22 +59,26 @@ export async function restoreSfks(url:string, asurl:string, username: string, pa
 
   async function fixContact(api, u, doc, secretForeignKeys) {
     const ldoc = await api.contacticc.getContactWithUser(u, doc._id)
-    return api.contacticc.modifyContactWithUser(u, Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)}))
+    const fixedDoc = Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)});
+    return api.contacticc.modifyContactWithUser(u, fixedDoc)
   }
 
   async function fixForm(api, u, doc, secretForeignKeys) {
     const ldoc = await api.formicc.getFormWithUser(u, doc._id)
-    return api.contacticc.modifyFormWithUser(u, Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)}))
+    const fixedDoc = Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)});
+    return api.contacticc.modifyFormWithUser(u, fixedDoc)
   }
 
   async function fixHealthElement(api, u, doc, secretForeignKeys) {
     const ldoc = await api.helementicc.getHealthElement(doc._id)
-    return api.helementicc.modifyHealthElement(Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)}))
+    const fixedDoc = Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)});
+    return api.helementicc.modifyHealthElement(fixedDoc)
   }
 
   async function fixInvoice(api, u, doc, secretForeignKeys) {
     const ldoc = await api.invoiceicc.getInvoice(doc._id)
-    return api.contacticc.modifyInvoice(Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)}))
+    const fixedDoc = Object.assign(ldoc, {secretForeignKeys: uniq(secretForeignKeys.extractedKeys)});
+    return api.contacticc.modifyInvoice(fixedDoc)
   }
 
   const grps = grep && grep.startsWith('@') ? [grep.substr(1)] : (await axios.get(`${url}/icure-__-config/_design/Group/_view/all?include_docs=true`, { headers: { 'Authorization': basicAuth }})).data.rows.map(g => g.id)
