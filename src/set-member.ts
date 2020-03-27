@@ -20,8 +20,9 @@ export function setMembers(server:string, username: string, password: string, gr
                 .then((sec) => ({db: db, group: g, secure: sec.data.members && sec.data.members.names && sec.data.members.names.includes(g)}))
                 .catch(() => ({db: db, group: g, secure: false}))
                 .then((db: any) => {
-                  !db.secure &&
+                  /*!db.secure && */
                     axios.put(`${server}/${db.db}/_security`, {"admins": {"names": [], "roles": []}, "members": {"names": [db.group], "roles": []}}, {headers: {'Authorization': basicAuth}})
+                        .then(() => console.log(`${db.db}: ok`)).catch(e => console.log(`${db.db}: ko,`,e))
                 })
             })))
         )
