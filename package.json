@@ -20,7 +20,7 @@
     "crc-32": "^1.2.0",
     "evaljs": "^2.0.1",
     "icc-api": "^1.0.179",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mixin-deep": "^2.0.1",
     "mocha": "^5.2.0",
     "node-fetch": "latest",
