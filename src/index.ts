@@ -19,6 +19,12 @@ import {cleanupUsers} from "./cleanup-users";
 import {addItems} from "./add-items";
 import {getOccurences} from "./get-occurences";
 import {restoreSfks} from "./restore-sfks";
+import {addTokenToUsers} from "./add-token-to-users";
+import {removeNode} from "./remove-node";
+import {trimDbs} from "./trim-dbs";
+import {balanceDbs} from "./balance-dbs";
+import {fixLocalhostDbs} from "./fix-localhost-dbs";
+import {capNodes} from "./cap-nodes";
 
 const program = require('commander');
 
@@ -90,15 +96,26 @@ program
   })
 
 program
-  .command('init-shards <srv>') // sub-command name
-  .alias('is') // alternative sub-command is `al`
-  .description('Init base dbs') // command description
-  .option('-u, --username [value]', 'Username', "icure")
-  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
-  .option('-g, --grep [value]', "Regex", ".+")
-  .action(function (srv, args) {
-    initShards(srv, args.username, args.password, args.grep)
-  })
+    .command('init-shards <srv>') // sub-command name
+    .alias('is') // alternative sub-command is `al`
+    .description('Init base dbs') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", ".+")
+    .action(function (srv, args) {
+        initShards(srv, args.username, args.password, args.grep)
+    })
+
+program
+    .command('add-token-to-users <srv>') // sub-command name
+    .alias('attu') // alternative sub-command is `al`
+    .description('Add token to all users in dbs') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", ".+")
+    .action(function (srv, args) {
+        addTokenToUsers(srv, args.username, args.password, args.grep)
+    })
 
 program
   .command('index-views <srv>') // sub-command name
@@ -173,14 +190,70 @@ program
   })
 
 program
-  .command('add-node <server> <db> <node>') // sub-command name
-  .alias('an') // alternative sub-command is `an`
-  .description('Add node to db. Do not use unless you know what you are doing') // command description
-  .option('-u, --username [value]', 'Username', "icure")
-  .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
-  .action(function (srv, db, node, args) {
-    addNode(srv, db, node, args.username, args.password)
-  })
+    .command('add-node <server> <db> <node>') // sub-command name
+    .alias('an') // alternative sub-command is `an`
+    .description('Add node to db. Do not use unless you know what you are doing') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .action(function (srv, db, node, args) {
+        addNode(srv, db, node, args.username, args.password)
+    })
+
+program
+    .command('remove-node <server> <db> <node>') // sub-command name
+    .alias('rn') // alternative sub-command is `an`
+    .description('Remove node from db. Do not use unless you know what you are doing') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .action(function (srv, db, node, args) {
+        removeNode(srv, db, node, args.username, args.password)
+    })
+
+program
+    .command('trim-dbs <server> <local>') // sub-command name
+    .alias('td') // alternative sub-command is `an`
+    .description('Remove nodes leaving only one from secondary dbs. Do not use unless you know what you are doing') // command description
+    .option('-c, --cluster [value]', 'Cluster', null)
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .action(function (srv, db, args) {
+        trimDbs(srv, db, args.cluster, args.username, args.password)
+    })
+
+program
+    .command('balance-dbs <server> <local> <source> <destination> <sshSource>') // sub-command name
+    .alias('bd') // alternative sub-command is `an`
+    .description('Remove nodes leaving only one from secondary dbs. Do not use unless you know what you are doing') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", "icure-")
+    .option('-m, --minSize [value]', "Minimum size", undefined)
+    .option('-s, --server [value]', "Server", undefined)
+    .action(function (srv, db, src, dst, ssh, args) {
+        balanceDbs(srv, db, src, dst, ssh, args.username, args.password, args.grep, args.minSize, args.server)
+    })
+
+program
+    .command('cap-nodes <local> <node>') // sub-command name
+    .alias('cn') // alternative sub-command is `an`
+    .description('Remove nodes leaving only one from secondary dbs. Do not use unless you know what you are doing') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", "icure-")
+    .action(function (db, node, args) {
+        capNodes(db, node, args.username, args.password, args.grep)
+    })
+
+program
+    .command('fix-localhost-dbs <server> <local>') // sub-command name
+    .alias('fld') // alternative sub-command is `an`
+    .description('Add nodes when localhost has been wrongly added') // command description
+    .option('-u, --username [value]', 'Username', "icure")
+    .option('-p, --password [value]', "Password", "S3clud3dM@x1m@")
+    .option('-g, --grep [value]', "Regex", "icure-")
+    .action(function (srv, db, args) {
+        fixLocalhostDbs(srv, db, args.username, args.password, args.grep)
+    })
 
 program
   .command('add-group <server> <prefix> <name>') // sub-command name

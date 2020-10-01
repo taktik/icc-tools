@@ -21,7 +21,7 @@ export function getHcps(url:string, username: string, password: string, grep: st
           )
           .then(({data: {rows: hcps}}) =>
               acc.concat(hcps.map(h => assign(h.doc, {groupId: g.id})))
-          ).catch(e => acc.concat([{nihii:'<N/A>', error:e, groupId: g.id}]))
+          ).catch(e => acc.concat([{nihii:'<N/A>', ssin:'<N/A>', error:e, groupId: g.id}]))
       )
     })
     prom.then(hcps => {
@@ -29,6 +29,11 @@ export function getHcps(url:string, username: string, password: string, grep: st
       hcps.forEach(h => { if (h.nihii) { byNihii[h.nihii] = (byNihii[h.nihii] || []).concat([h]) }})
       Object.keys(byNihii).forEach(k => {
         console.log(`${byNihii[k][0].lastName}\t${byNihii[k][0].firstName}\t${k}\t${byNihii[k].map(h => h.groupId).join(',')}`)
+      })
+      const bySsin = {}
+      hcps.forEach(h => { if (h.ssin) { bySsin[h.ssin] = (bySsin[h.ssin] || []).concat([h]) }})
+      Object.keys(bySsin).forEach(k => {
+        console.log(`${bySsin[k][0].lastName}\t${bySsin[k][0].firstName}\t${k}\t${bySsin[k].map(h => h.groupId).join(',')}`)
       })
     })
   })
